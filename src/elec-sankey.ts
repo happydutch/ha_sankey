@@ -790,8 +790,11 @@ export class ElecSankey extends LitElement {
         generationTrackedTotal;
     }
 
-    const sourceUnknownThreshold = this.hideSourceUnknownBelow || 0;
-    const untrackedThreshold = this.hideUntrackedBelow || 0;
+    const defaultSmallPowerThreshold = this.unit === "W" ? 10 : 0;
+    const sourceUnknownThreshold =
+      this.hideSourceUnknownBelow || defaultSmallPowerThreshold;
+    const untrackedThreshold =
+      this.hideUntrackedBelow || defaultSmallPowerThreshold;
 
     this._phantomGridInRoute =
       phantomGridIn > sourceUnknownThreshold
