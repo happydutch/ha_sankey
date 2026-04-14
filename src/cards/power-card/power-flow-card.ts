@@ -41,7 +41,7 @@ import { setupCustomlocalize } from "../../localize";
 const DEFAULT_CONFIG: PowerFlowCardConfig = {
   type: `custom:${POWER_CARD_NAME}`,
   title: "Live power flow",
-  config_version: 3,
+  config_version: 4,
   consumer_entities: [],
   battery_entities: [],
   generation_entity: undefined,
@@ -51,6 +51,8 @@ const DEFAULT_CONFIG: PowerFlowCardConfig = {
   hide_small_consumers: false,
   max_consumer_branches: 0,
   independent_grid_in_out: false,
+  hide_untracked_branch: false,
+  hide_unknown_source_branches: false,
 };
 
 export function verifyAndMigrateConfig(config: PowerFlowCardConfig) {
@@ -79,6 +81,13 @@ export function verifyAndMigrateConfig(config: PowerFlowCardConfig) {
     console.log("Migrating config from version 2 to version 3");
     currentVersion = 3;
     newConfig.type = `custom:${POWER_CARD_NAME}`;
+  }
+  if (currentVersion === 3) {
+    // Migrate from version 3 to version 4
+    console.log("Migrating config from version 3 to version 4");
+    currentVersion = 4;
+    newConfig.hide_untracked_branch = false;
+    newConfig.hide_unknown_source_branches = false;
   }
 
   if (
@@ -501,6 +510,9 @@ export class PowerFlowCard extends ElecFlowCardBase implements LovelaceCard {
             .hideConsumersBelow=${hideConsumersBelow}
             .hideUntrackedBelow=${HIDE_UNTRACKED_AND_UNKNOWN_BELOW_THRESHOLD_W}
             .hideSourceUnknownBelow=${HIDE_UNTRACKED_AND_UNKNOWN_BELOW_THRESHOLD_W}
+            .hideUntrackedBranch=${this._config.hide_untracked_branch || false}
+            .hideUnknownSourceBranches=${this._config.hide_unknown_source_branches ||
+            false}
             .batteryChargeOnlyFromGeneration=${batteryChargeOnlyFromGeneration}
           ></ha-elec-sankey>
         </div>

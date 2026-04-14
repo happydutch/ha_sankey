@@ -34,6 +34,9 @@ The power flow card now includes a few useful defaults:
 - Tiny balancing differences are hidden:
   - the **Untracked** consumer branch is hidden if it is below **10W**
   - the **Unknown source** (`<?>`) branch on the source side is hidden if it is below **10W**
+- You can now force-hide these branches entirely with config options:
+  - `hide_untracked_branch: true`
+  - `hide_unknown_source_branches: true`
 - Consumer display names can be overridden directly in the card editor using **Display name (optional)** for each configured consumer sensor.
 
 ### Example YAML for consumer name overrides
@@ -48,6 +51,8 @@ consumer_entities:
     name: Kitchen
   - entity: sensor.hvac_power
     name: HVAC
+hide_untracked_branch: true
+hide_unknown_source_branches: true
 ```
 
 ## Installation (the easy way)

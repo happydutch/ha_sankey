@@ -483,6 +483,12 @@ export class ElecSankey extends LitElement {
   public hideSourceUnknownBelow: number = 0;
 
   @property({ attribute: false })
+  public hideUntrackedBranch: boolean = false;
+
+  @property({ attribute: false })
+  public hideUnknownSourceBranches: boolean = false;
+
+  @property({ attribute: false })
   public batteryChargeOnlyFromGeneration: boolean = false;
 
   private _rateToWidthMultplier: number = 0.2;
@@ -806,7 +812,7 @@ export class ElecSankey extends LitElement {
     const untrackedThreshold = this._effectiveUntrackedThreshold();
 
     this._phantomGridInRoute =
-      phantomGridIn > sourceUnknownThreshold
+      !this.hideUnknownSourceBranches && phantomGridIn > sourceUnknownThreshold
         ? {
             text: "Unknown source",
             icon: mdiHelpRhombus,
@@ -814,6 +820,7 @@ export class ElecSankey extends LitElement {
           }
         : undefined;
     this._phantomGenerationInRoute =
+      !this.hideUnknownSourceBranches &&
       phantomGeneration > sourceUnknownThreshold
         ? {
             text: "Unknown source",
@@ -829,7 +836,10 @@ export class ElecSankey extends LitElement {
     this._untrackedConsumerRoute = {
       id: UNTRACKED_ID,
       text: untrackedName,
-      rate: untrackedConsumer > untrackedThreshold ? untrackedConsumer : 0,
+      rate:
+        !this.hideUntrackedBranch && untrackedConsumer > untrackedThreshold
+          ? untrackedConsumer
+          : 0,
     };
 
     /**
@@ -995,10 +1005,12 @@ export class ElecSankey extends LitElement {
     }
     const sourceUnknownThreshold = this._effectiveSourceUnknownThreshold();
     const phantomGenerationRoute =
-      this._phantomGenerationInRoute &&
-      this._phantomGenerationInRoute.rate > sourceUnknownThreshold
-        ? this._phantomGenerationInRoute
-        : undefined;
+      this.hideUnknownSourceBranches
+        ? undefined
+        : this._phantomGenerationInRoute &&
+          this._phantomGenerationInRoute.rate > sourceUnknownThreshold
+          ? this._phantomGenerationInRoute
+          : undefined;
     const count =
       Object.keys(this.generationInRoutes).length +
       (phantomGenerationRoute !== undefined ? 1 : 0);
@@ -1188,7 +1200,7 @@ export class ElecSankey extends LitElement {
     }
     if (
       gridRoute === this._phantomGridInRoute &&
-      gridRoute.rate <= sourceUnknownThreshold
+      (this.hideUnknownSourceBranches || gridRoute.rate <= sourceUnknownThreshold)
     ) {
       return [nothing, nothing];
     }
@@ -1628,6 +1640,7 @@ export class ElecSankey extends LitElement {
     }
 
     if (
+      !this.hideUntrackedBranch &&
       this._untrackedConsumerRoute.rate >
       Math.max(ZERO_CHECK_TOLERANCE, this._effectiveUntrackedThreshold())
     ) {
