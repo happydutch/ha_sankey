@@ -477,6 +477,18 @@ export class ElecSankey extends LitElement {
   public hideConsumersBelow: number = 0;
 
   @property({ attribute: false })
+  public hideUntrackedBelow: number = 0;
+
+  @property({ attribute: false })
+  public hideSourceUnknownBelow: number = 0;
+
+  @property({ attribute: false })
+  public hideUntrackedBranch: boolean = false;
+
+  @property({ attribute: false })
+  public hideUnknownSourceBranches: boolean = false;
+
+  @property({ attribute: false })
   public batteryChargeOnlyFromGeneration: boolean = false;
 
   private _rateToWidthMultplier: number = 0.2;
@@ -511,6 +523,18 @@ export class ElecSankey extends LitElement {
     // This is a simple localizer that can be overridden by the parent class.
     return fallBack || key;
   };
+
+  private _isPowerUnit(): boolean {
+    return this.unit.trim().toLowerCase() === "w";
+  }
+
+  private _effectiveSourceUnknownThreshold(): number {
+    return this.hideSourceUnknownBelow || (this._isPowerUnit() ? 10 : 0);
+  }
+
+  private _effectiveUntrackedThreshold(): number {
+    return this.hideUntrackedBelow || (this._isPowerUnit() ? 10 : 0);
+  }
 
   private _generationTrackedTotal(): number {
     let totalGen = 0;
@@ -784,8 +808,11 @@ export class ElecSankey extends LitElement {
         generationTrackedTotal;
     }
 
+    const sourceUnknownThreshold = this._effectiveSourceUnknownThreshold();
+    const untrackedThreshold = this._effectiveUntrackedThreshold();
+
     this._phantomGridInRoute =
-      phantomGridIn > 0
+      !this.hideUnknownSourceBranches && phantomGridIn > sourceUnknownThreshold
         ? {
             text: "Unknown source",
             icon: mdiHelpRhombus,
@@ -793,7 +820,8 @@ export class ElecSankey extends LitElement {
           }
         : undefined;
     this._phantomGenerationInRoute =
-      phantomGeneration > 0.01
+      !this.hideUnknownSourceBranches &&
+      phantomGeneration > sourceUnknownThreshold
         ? {
             text: "Unknown source",
             icon: mdiHelpRhombus,
@@ -808,7 +836,10 @@ export class ElecSankey extends LitElement {
     this._untrackedConsumerRoute = {
       id: UNTRACKED_ID,
       text: untrackedName,
-      rate: untrackedConsumer > 0 ? untrackedConsumer : 0,
+      rate:
+        !this.hideUntrackedBranch && untrackedConsumer > untrackedThreshold
+          ? untrackedConsumer
+          : 0,
     };
 
     /**
@@ -972,9 +1003,17 @@ export class ElecSankey extends LitElement {
     if (genToConsWidth === 0 && !Object.keys(this.generationInRoutes)) {
       return [[nothing], nothing];
     }
+    const sourceUnknownThreshold = this._effectiveSourceUnknownThreshold();
+    const phantomGenerationRoute =
+      this.hideUnknownSourceBranches
+        ? undefined
+        : this._phantomGenerationInRoute &&
+          this._phantomGenerationInRoute.rate > sourceUnknownThreshold
+          ? this._phantomGenerationInRoute
+          : undefined;
     const count =
       Object.keys(this.generationInRoutes).length +
-      (this._phantomGenerationInRoute !== undefined ? 1 : 0);
+      (phantomGenerationRoute !== undefined ? 1 : 0);
     const fanOutWidth = totalGenWidth + (count - 1) * genFanOutGap;
     let xA = x0 + totalGenWidth / 2 - fanOutWidth / 2;
     let xB = x0;
@@ -984,9 +1023,9 @@ export class ElecSankey extends LitElement {
     const startTerminatorY = 0;
     let phantomRate = 0;
     const routes = structuredClone(this.generationInRoutes);
-    if (this._phantomGenerationInRoute !== undefined) {
-      routes.phantom = this._phantomGenerationInRoute;
-      phantomRate = this._phantomGenerationInRoute.rate;
+    if (phantomGenerationRoute !== undefined) {
+      routes.phantom = phantomGenerationRoute;
+      phantomRate = phantomGenerationRoute.rate;
     }
     let i = 0;
     // eslint-disable-next-line guard-for-in
@@ -1150,12 +1189,19 @@ export class ElecSankey extends LitElement {
     y10: number,
     svgScaleX: number
   ): [TemplateResult | symbol, TemplateResult | symbol] {
+    const sourceUnknownThreshold = this._effectiveSourceUnknownThreshold();
     const gridRoute =
       this.gridInRoute ||
       this.gridOutRoute ||
       this._phantomGridInRoute ||
       undefined;
     if (!gridRoute) {
+      return [nothing, nothing];
+    }
+    if (
+      gridRoute === this._phantomGridInRoute &&
+      (this.hideUnknownSourceBranches || gridRoute.rate <= sourceUnknownThreshold)
+    ) {
       return [nothing, nothing];
     }
     const arrow_head_length = ARROW_HEAD_LENGTH / svgScaleX;
@@ -1593,21 +1639,27 @@ export class ElecSankey extends LitElement {
       }
     }
 
-    [divRow, svgFlow, svgExtra, svgArrow, yLeft, yRight] =
-      this._renderConsumerFlow(
-        xLeft,
-        yLeft,
-        xRight,
-        yRight,
-        this._untrackedConsumerRoute,
-        color,
-        svgScaleX,
-        i++
-      );
-    divRetArray.push(divRow);
-    svgFlowArray.push(svgFlow);
-    svgExtraArray.push(svgExtra);
-    svgArrowArray.push(svgArrow);
+    if (
+      !this.hideUntrackedBranch &&
+      this._untrackedConsumerRoute.rate >
+      Math.max(ZERO_CHECK_TOLERANCE, this._effectiveUntrackedThreshold())
+    ) {
+      [divRow, svgFlow, svgExtra, svgArrow, yLeft, yRight] =
+        this._renderConsumerFlow(
+          xLeft,
+          yLeft,
+          xRight,
+          yRight,
+          this._untrackedConsumerRoute,
+          color,
+          svgScaleX,
+          i++
+        );
+      divRetArray.push(divRow);
+      svgFlowArray.push(svgFlow);
+      svgExtraArray.push(svgExtra);
+      svgArrowArray.push(svgArrow);
+    }
     return [
       divRetArray,
       svgFlowArray,

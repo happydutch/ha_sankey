@@ -34,6 +34,8 @@ const POWER_LABELS = [
   "invert_battery_flows",
   "battery_charge_only_from_generation",
   "independent_grid_in_out",
+  "hide_untracked_branch",
+  "hide_unknown_source_branches",
 ];
 
 @customElement(POWER_CARD_EDITOR_NAME)
@@ -112,6 +114,14 @@ export class PowerFlowCardEditor
           },
           {
             name: "battery_charge_only_from_generation",
+            selector: { boolean: {} },
+          },
+          {
+            name: "hide_untracked_branch",
+            selector: { boolean: {} },
+          },
+          {
+            name: "hide_unknown_source_branches",
             selector: { boolean: {} },
           },
         ],
@@ -279,6 +289,17 @@ export class PowerFlowCardEditor
       ) {
         configValue = "independent_grid_in_out";
         value = value.independent_grid_in_out;
+      } else if (
+        value.hide_untracked_branch != this._config.hide_untracked_branch
+      ) {
+        configValue = "hide_untracked_branch";
+        value = value.hide_untracked_branch;
+      } else if (
+        value.hide_unknown_source_branches !=
+        this._config.hide_unknown_source_branches
+      ) {
+        configValue = "hide_unknown_source_branches";
+        value = value.hide_unknown_source_branches;
       } else {
         console.warn("unhandled change in <ha-form>");
       }

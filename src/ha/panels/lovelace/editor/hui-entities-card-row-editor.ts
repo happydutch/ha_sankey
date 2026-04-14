@@ -7,6 +7,7 @@ import { fireEvent } from "../../../common/dom/fire_event";
 import type { HaEntityPicker } from "../../../components/entity/ha-entity-picker";
 import type { HomeAssistant } from "../../../types";
 import type { EntityConfig, LovelaceRowConfig } from "../entity-rows/types";
+import "../../../components/ha-textfield";
 
 declare global {
   interface HASSDomEvents {
@@ -82,17 +83,25 @@ export class HuiEntitiesCardRowEditor extends LitElement {
                         </div>
                       </div>
                     `
-            : html`
-                      <ha-entity-picker
-                        allow-custom-entity
-                        include-device-classes=${deviceClassesFilter}
-                        hideClearIcon
-                        label=${this.subLabel || nothing}
-                        .hass=${this.hass}
-                        .value=${(entityConf as EntityConfig).entity}
-                        .index=${index}
-                        @value-changed=${this._valueChanged}
-                      ></ha-entity-picker>
+                    : html`
+                      <div class="entity-inputs">
+                        <ha-entity-picker
+                          allow-custom-entity
+                          include-device-classes=${deviceClassesFilter}
+                          hideClearIcon
+                          label=${this.subLabel || nothing}
+                          .hass=${this.hass}
+                          .value=${(entityConf as EntityConfig).entity}
+                          .index=${index}
+                          @value-changed=${this._valueChanged}
+                        ></ha-entity-picker>
+                        <ha-textfield
+                          label="Display name (optional)"
+                          .value=${(entityConf as EntityConfig).name || ""}
+                          .index=${index}
+                          @input=${this._nameChanged}
+                        ></ha-textfield>
+                      </div>
                     `}
                 <ha-icon-button
                   .label=${this.hass!.localize(
@@ -167,6 +176,24 @@ export class HuiEntitiesCardRowEditor extends LitElement {
     fireEvent(this, "entities-changed", { entities: newConfigEntities });
   }
 
+  private _nameChanged(ev: Event): void {
+    const target = ev.currentTarget as any;
+    const index = target.index;
+    const value = target.value?.trim();
+    const newConfigEntities = this.entities!.concat();
+
+    newConfigEntities[index] = {
+      ...newConfigEntities[index],
+      ...(value ? { name: value } : {}),
+    };
+
+    if (!value && "name" in (newConfigEntities[index] as EntityConfig)) {
+      delete (newConfigEntities[index] as EntityConfig).name;
+    }
+
+    fireEvent(this, "entities-changed", { entities: newConfigEntities });
+  }
+
   private _editRow(ev: CustomEvent): void {
     const index = (ev.currentTarget as any).index;
     fireEvent(this, "edit-detail-element", {
@@ -210,6 +237,13 @@ export class HuiEntitiesCardRowEditor extends LitElement {
 
       .entity ha-entity-picker {
         flex-grow: 1;
+      }
+      .entity-inputs {
+        flex-grow: 1;
+      }
+      .entity-inputs ha-textfield {
+        width: 100%;
+        margin-top: 8px;
       }
 
       .special-row {
