@@ -33,6 +33,7 @@ import {
   POWER_CARD_NAME,
   POWER_CARD_EDITOR_NAME,
   HIDE_CONSUMERS_BELOW_THRESHOLD_W,
+  HIDE_UNTRACKED_AND_UNKNOWN_BELOW_THRESHOLD_W,
 } from "./const";
 import { ElecFlowCardBase } from "../../shared/elec-flow-card-base";
 import { setupCustomlocalize } from "../../localize";
@@ -498,6 +499,8 @@ export class PowerFlowCard extends ElecFlowCardBase implements LovelaceCard {
             .batteryRoutes=${batteryRoutes}
             .maxConsumerBranches=${maxConsumerBranches}
             .hideConsumersBelow=${hideConsumersBelow}
+            .hideUntrackedBelow=${HIDE_UNTRACKED_AND_UNKNOWN_BELOW_THRESHOLD_W}
+            .hideSourceUnknownBelow=${HIDE_UNTRACKED_AND_UNKNOWN_BELOW_THRESHOLD_W}
             .batteryChargeOnlyFromGeneration=${batteryChargeOnlyFromGeneration}
           ></ha-elec-sankey>
         </div>

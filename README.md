@@ -27,6 +27,29 @@ The colour\* of the flows heading to the consumers represents the blend of local
 
 The diagram dynamically scales to fit the size of the window it is in (mostly).
 
+## Power card quality-of-life improvements
+
+The power flow card now includes a few useful defaults:
+
+- Tiny balancing differences are hidden:
+  - the **Untracked** consumer branch is hidden if it is below **10W**
+  - the **Unknown source** (`<?>`) branch on the source side is hidden if it is below **10W**
+- Consumer display names can be overridden directly in the card editor using **Display name (optional)** for each configured consumer sensor.
+
+### Example YAML for consumer name overrides
+
+```yaml
+type: custom:ha-sankey-power-flow-card
+title: Live power flow
+power_from_grid_entity: sensor.grid_power
+generation_entity: sensor.solar_power
+consumer_entities:
+  - entity: sensor.kitchen_power
+    name: Kitchen
+  - entity: sensor.hvac_power
+    name: HVAC
+```
+
 ## Installation (the easy way)
 
 If you've already installed HACS (https://hacs.xyz/), click this button and then click download!

@@ -477,6 +477,12 @@ export class ElecSankey extends LitElement {
   public hideConsumersBelow: number = 0;
 
   @property({ attribute: false })
+  public hideUntrackedBelow: number = 0;
+
+  @property({ attribute: false })
+  public hideSourceUnknownBelow: number = 0;
+
+  @property({ attribute: false })
   public batteryChargeOnlyFromGeneration: boolean = false;
 
   private _rateToWidthMultplier: number = 0.2;
@@ -784,8 +790,11 @@ export class ElecSankey extends LitElement {
         generationTrackedTotal;
     }
 
+    const sourceUnknownThreshold = this.hideSourceUnknownBelow || 0;
+    const untrackedThreshold = this.hideUntrackedBelow || 0;
+
     this._phantomGridInRoute =
-      phantomGridIn > 0
+      phantomGridIn > sourceUnknownThreshold
         ? {
             text: "Unknown source",
             icon: mdiHelpRhombus,
@@ -793,7 +802,7 @@ export class ElecSankey extends LitElement {
           }
         : undefined;
     this._phantomGenerationInRoute =
-      phantomGeneration > 0.01
+      phantomGeneration > sourceUnknownThreshold
         ? {
             text: "Unknown source",
             icon: mdiHelpRhombus,
@@ -808,7 +817,7 @@ export class ElecSankey extends LitElement {
     this._untrackedConsumerRoute = {
       id: UNTRACKED_ID,
       text: untrackedName,
-      rate: untrackedConsumer > 0 ? untrackedConsumer : 0,
+      rate: untrackedConsumer > untrackedThreshold ? untrackedConsumer : 0,
     };
 
     /**
@@ -1593,21 +1602,23 @@ export class ElecSankey extends LitElement {
       }
     }
 
-    [divRow, svgFlow, svgExtra, svgArrow, yLeft, yRight] =
-      this._renderConsumerFlow(
-        xLeft,
-        yLeft,
-        xRight,
-        yRight,
-        this._untrackedConsumerRoute,
-        color,
-        svgScaleX,
-        i++
-      );
-    divRetArray.push(divRow);
-    svgFlowArray.push(svgFlow);
-    svgExtraArray.push(svgExtra);
-    svgArrowArray.push(svgArrow);
+    if (this._untrackedConsumerRoute.rate > ZERO_CHECK_TOLERANCE) {
+      [divRow, svgFlow, svgExtra, svgArrow, yLeft, yRight] =
+        this._renderConsumerFlow(
+          xLeft,
+          yLeft,
+          xRight,
+          yRight,
+          this._untrackedConsumerRoute,
+          color,
+          svgScaleX,
+          i++
+        );
+      divRetArray.push(divRow);
+      svgFlowArray.push(svgFlow);
+      svgExtraArray.push(svgExtra);
+      svgArrowArray.push(svgArrow);
+    }
     return [
       divRetArray,
       svgFlowArray,
